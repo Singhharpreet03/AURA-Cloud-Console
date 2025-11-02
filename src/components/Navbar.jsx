@@ -21,6 +21,7 @@ const Navbar = () => {
     { path: "/intelligent-alerts", label: "Intelligent Alerts" },
     { path: "/resource-monitor", label: "Resource Monitor" },
     { path: "/drift-management", label: "Drift Management" },
+    { path: "/installation", label: "Installation" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -57,8 +58,27 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
+            {/* <Link to="/" className="flex items-center space-x-3">
               <Shield className="w-8 h-8" style={{ color: "#F1EFEC" }} />
+              <div>
+                <h1 className="text-xl font-bold" style={{ color: "#F1EFEC" }}>
+                  AURA
+                </h1>
+                <span
+                  className="text-xs opacity-75"
+                  style={{ color: "#D4C9BE" }}
+                >
+                  Autonomous Unified Resource Agent
+                </span>
+              </div>
+            </Link> */}
+            <Link to="/" className="flex items-center space-x-4">
+              <img
+                src="/logo.jpg"
+                alt="AURA Logo"
+                className="w-16 h-16"
+                style={{ objectFit: "contain" }}
+              />
               <div>
                 <h1 className="text-xl font-bold" style={{ color: "#F1EFEC" }}>
                   AURA

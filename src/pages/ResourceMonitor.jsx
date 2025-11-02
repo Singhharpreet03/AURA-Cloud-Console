@@ -563,7 +563,7 @@ const ResourceMonitor = () => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold" style={{ color: "#123458" }}>
               Resource Monitor
             </h1>
             <p className="mt-2 text-gray-600">

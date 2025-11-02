@@ -16,6 +16,12 @@ import {
   User,
   X,
   Info,
+  Eye,
+  Bot,
+  Terminal,
+  Copy,
+  FileText,
+  Zap,
 } from "lucide-react";
 
 // Toast Notification Component
@@ -66,6 +72,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
     md: "max-w-lg",
     lg: "max-w-2xl",
     xl: "max-w-4xl",
+    "2xl": "max-w-6xl",
   };
 
   return (
@@ -77,9 +84,9 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
 
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={`relative w-full ${sizeClasses[size]} rounded-xl shadow-xl transition-all bg-white`}
+          className={`relative w-full ${sizeClasses[size]} rounded-xl shadow-xl transition-all bg-white max-h-[90vh] overflow-y-auto`}
         >
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="sticky top-0 bg-white flex items-center justify-between p-4 border-b border-gray-200 z-10">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button
               onClick={onClose}
@@ -96,11 +103,328 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
   );
 };
 
+// Patch Details Content Component
+const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
+  const [executionMode, setExecutionMode] = useState("agent");
+  const [scriptType, setScriptType] = useState("automated");
+  const scripts = generateScript(patch);
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Patch Information */}
+      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div>
+          <span className="text-sm text-gray-600">Type:</span>
+          <span className="ml-2 font-medium text-gray-900">{patch.type}</span>
+        </div>
+        <div>
+          <span className="text-sm text-gray-600">Severity:</span>
+          <span
+            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+              patch.severity === "critical"
+                ? "bg-red-100 text-red-800"
+                : patch.severity === "high"
+                ? "bg-orange-100 text-orange-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {patch.severity}
+          </span>
+        </div>
+        <div>
+          <span className="text-sm text-gray-600">Size:</span>
+          <span className="ml-2 font-medium text-gray-900">{patch.size}</span>
+        </div>
+        <div>
+          <span className="text-sm text-gray-600">Release Date:</span>
+          <span className="ml-2 font-medium text-gray-900">
+            {patch.releaseDate}
+          </span>
+        </div>
+        <div className="col-span-2">
+          <span className="text-sm text-gray-600">Description:</span>
+          <p className="mt-1 text-sm text-gray-900">{patch.description}</p>
+        </div>
+        <div className="col-span-2">
+          <span className="text-sm text-gray-600">Restart Required:</span>
+          <span className="ml-2 font-medium text-gray-900">
+            {patch.requiresRestart ? "Yes" : "No"}
+          </span>
+        </div>
+      </div>
+
+      {/* Execution Mode Selection */}
+      <div>
+        <h4 className="font-semibold text-gray-900 mb-3">Execution Mode</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setExecutionMode("agent")}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              executionMode === "agent"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <div className="flex items-center space-x-3 mb-2">
+              <Bot className="w-5 h-5 text-blue-600" />
+              <span className="font-semibold text-gray-900">
+                AI Agent (Automated)
+              </span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Let the AI agent handle the entire installation process
+              automatically
+            </p>
+          </button>
+          <button
+            onClick={() => setExecutionMode("manual")}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              executionMode === "manual"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <div className="flex items-center space-x-3 mb-2">
+              <User className="w-5 h-5 text-purple-600" />
+              <span className="font-semibold text-gray-900">
+                Manual Execution
+              </span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Follow manual steps and execute commands yourself
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* Script Display */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-gray-900">
+            {executionMode === "agent" ? "AI-Generated" : "Manual"} Script
+          </h4>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setScriptType("automated")}
+              className={`px-3 py-1 text-xs rounded ${
+                scriptType === "automated"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              Automated
+            </button>
+            <button
+              onClick={() => setScriptType("manual")}
+              className={`px-3 py-1 text-xs rounded ${
+                scriptType === "manual"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              Manual
+            </button>
+          </div>
+        </div>
+
+        <div className="relative">
+          <pre className="p-4 bg-gray-900 text-green-400 rounded-lg overflow-x-auto text-sm font-mono">
+            {scripts[scriptType]}
+          </pre>
+          <button
+            onClick={() => copyToClipboard(scripts[scriptType])}
+            className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
+            title="Copy to clipboard"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* AI Recommendations */}
+      {executionMode === "agent" && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <h5 className="font-semibold text-blue-900 mb-1">
+                AI Recommendation
+              </h5>
+              <p className="text-sm text-blue-800">
+                Based on system analysis, this patch can be safely installed
+                during the next maintenance window. The agent will:
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-blue-800">
+                <li>• Create a system restore point</li>
+                <li>• Download and verify patch integrity</li>
+                <li>• Install with optimal settings</li>
+                <li>• Monitor for any issues</li>
+                {patch.requiresRestart && (
+                  <li>• Schedule restart during off-peak hours</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => window.history.back()}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => onExecute(patch, executionMode)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center space-x-2"
+        >
+          {executionMode === "agent" ? (
+            <>
+              <Bot className="w-4 h-4" />
+              <span>Execute with AI Agent</span>
+            </>
+          ) : (
+            <>
+              <Terminal className="w-4 h-4" />
+              <span>Prepare Manual Execution</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Create Workflow Form Component
+const CreateWorkflowForm = ({ onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "Custom",
+    patches: 0,
+    devices: 0,
+    schedule: "Manual",
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-2 text-gray-900">
+          Workflow Name *
+        </label>
+        <input
+          type="text"
+          required
+          className="w-full p-2 border border-gray-300 rounded-lg"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="e.g., Monthly Security Updates"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2 text-gray-900">
+          Workflow Type
+        </label>
+        <select
+          className="w-full p-2 border border-gray-300 rounded-lg"
+          value={formData.type}
+          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+        >
+          <option value="Predefined">Predefined</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-900">
+            Number of Patches
+          </label>
+          <input
+            type="number"
+            min="0"
+            className="w-full p-2 border border-gray-300 rounded-lg"
+            value={formData.patches}
+            onChange={(e) =>
+              setFormData({ ...formData, patches: parseInt(e.target.value) })
+            }
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-900">
+            Target Devices
+          </label>
+          <input
+            type="number"
+            min="0"
+            className="w-full p-2 border border-gray-300 rounded-lg"
+            value={formData.devices}
+            onChange={(e) =>
+              setFormData({ ...formData, devices: parseInt(e.target.value) })
+            }
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2 text-gray-900">
+          Schedule
+        </label>
+        <select
+          className="w-full p-2 border border-gray-300 rounded-lg"
+          value={formData.schedule}
+          onChange={(e) =>
+            setFormData({ ...formData, schedule: e.target.value })
+          }
+        >
+          <option value="Manual">Manual</option>
+          <option value="Daily - 2:00 AM">Daily - 2:00 AM</option>
+          <option value="Weekly - Sunday 2:00 AM">
+            Weekly - Sunday 2:00 AM
+          </option>
+          <option value="Monthly - 1st Sunday">Monthly - 1st Sunday</option>
+        </select>
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+        >
+          Create Workflow
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const PatchManagement = () => {
   const [selectedDevice, setSelectedDevice] = useState("WS-Marketing-01");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showDeployModal, setShowDeployModal] = useState(false);
+  const [showWorkflowModal, setShowWorkflowModal] = useState(false);
+  const [showPatchDetailsModal, setShowPatchDetailsModal] = useState(false);
+  const [showCreateWorkflowModal, setShowCreateWorkflowModal] = useState(false);
+  const [selectedPatch, setSelectedPatch] = useState(null);
   const [toast, setToast] = useState(null);
   const [devices, setDevices] = useState([
     {
@@ -129,6 +453,66 @@ const PatchManagement = () => {
       lastUpdate: "2024-01-14 09:22",
       os: "Windows 11",
       progress: 0,
+    },
+  ]);
+
+  const [availablePatches, setAvailablePatches] = useState([
+    {
+      id: "KB5034441",
+      name: "Security Update for Windows 11",
+      type: "Security",
+      severity: "critical",
+      size: "450 MB",
+      releaseDate: "2024-01-12",
+      description: "Critical security update addressing CVE-2024-0001",
+      requiresRestart: true,
+      status: "available",
+    },
+    {
+      id: "UPD-2024-001",
+      name: "MySQL Server 8.0.35 Update",
+      type: "Upgrade",
+      severity: "high",
+      size: "125 MB",
+      releaseDate: "2024-01-10",
+      description:
+        "Upgrade to MySQL Server 8.0.35 with performance improvements",
+      requiresRestart: true,
+      status: "available",
+    },
+    {
+      id: "INST-DOCKER-01",
+      name: "Docker Desktop Installation",
+      type: "Installation",
+      severity: "medium",
+      size: "580 MB",
+      releaseDate: "2024-01-08",
+      description: "Install Docker Desktop for containerization support",
+      requiresRestart: false,
+      status: "available",
+    },
+  ]);
+
+  const [workflows, setWorkflows] = useState([
+    {
+      id: "WF-001",
+      name: "Windows Security Updates",
+      type: "Predefined",
+      patches: 8,
+      devices: 15,
+      schedule: "Weekly - Sunday 2:00 AM",
+      lastRun: "2024-01-14 02:00",
+      status: "active",
+    },
+    {
+      id: "WF-002",
+      name: "Database Server Maintenance",
+      type: "Custom",
+      patches: 3,
+      devices: 2,
+      schedule: "Monthly - 1st Sunday",
+      lastRun: "2024-01-07 03:00",
+      status: "active",
     },
   ]);
 
@@ -177,7 +561,6 @@ const PatchManagement = () => {
       );
       showToast(`Rolling back ${updatingDevice.name}...`, "info");
 
-      // Simulate rollback progress
       setTimeout(() => {
         setDevices(
           devices.map((device) =>
@@ -193,8 +576,155 @@ const PatchManagement = () => {
     }
   };
 
+  const handleViewPatchDetails = (patch) => {
+    setSelectedPatch(patch);
+    setShowPatchDetailsModal(true);
+  };
+
+  const handleCreateWorkflow = () => {
+    setShowCreateWorkflowModal(true);
+  };
+
+  const handleViewWorkflows = () => {
+    setShowWorkflowModal(true);
+  };
+
+  const generateAIScript = (patch) => {
+    const scripts = {
+      KB5034441: {
+        automated: `# AI-Recommended Automated Script
+wusa.exe /quiet /norestart KB5034441.msu
+if ($LASTEXITCODE -eq 0) {
+  Write-Host "Patch installed successfully"
+  # Schedule restart during maintenance window
+  shutdown /r /t 7200 /c "Security update requires restart"
+} else {
+  Write-Error "Patch installation failed"
+}`,
+        manual: `# Manual Installation Steps
+1. Download KB5034441.msu from Windows Update Catalog
+2. Double-click the .msu file
+3. Follow the Windows Update Standalone Installer
+4. Restart when prompted
+
+# Or use Command Prompt:
+wusa.exe KB5034441.msu`,
+      },
+      "UPD-2024-001": {
+        automated: `# AI-Recommended Automated Upgrade Script
+# Backup current database
+mysqldump --all-databases > backup_$(date +%Y%m%d).sql
+
+# Stop MySQL service
+systemctl stop mysql
+
+# Upgrade MySQL packages
+apt-get update && apt-get install mysql-server=8.0.35
+
+# Start MySQL service
+systemctl start mysql
+
+# Verify upgrade
+mysql --version`,
+        manual: `# Manual Upgrade Steps
+1. Backup your databases:
+   mysqldump --all-databases > backup.sql
+
+2. Stop MySQL service:
+   sudo systemctl stop mysql
+
+3. Update packages:
+   sudo apt-get update
+   sudo apt-get install mysql-server
+
+4. Start MySQL:
+   sudo systemctl start mysql
+
+5. Verify:
+   mysql --version`,
+      },
+      "INST-DOCKER-01": {
+        automated: `# AI-Recommended Automated Installation
+# Download Docker Desktop
+$url = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
+$output = "$env:TEMP\\DockerDesktopInstaller.exe"
+Invoke-WebRequest -Uri $url -OutFile $output
+
+# Install silently
+Start-Process -FilePath $output -Args "install --quiet" -Wait
+
+# Verify installation
+docker --version`,
+        manual: `# Manual Installation Steps
+1. Download Docker Desktop from:
+   https://www.docker.com/products/docker-desktop
+
+2. Run the installer:
+   - Double-click Docker Desktop Installer.exe
+   - Follow installation wizard
+   - Enable WSL 2 integration if prompted
+
+3. Start Docker Desktop
+
+4. Verify installation:
+   docker --version`,
+      },
+    };
+
+    return (
+      scripts[patch.id] || {
+        automated: "# No automated script available",
+        manual: "# No manual steps available",
+      }
+    );
+  };
+
+  const handleExecutePatch = (patch, mode) => {
+    setShowPatchDetailsModal(false);
+
+    if (mode === "agent") {
+      showToast(`AI Agent executing patch ${patch.id}...`, "info");
+
+      setTimeout(() => {
+        showToast(`Running pre-installation checks...`, "info");
+      }, 1000);
+
+      setTimeout(() => {
+        showToast(`Downloading patch files (${patch.size})...`, "info");
+      }, 2000);
+
+      setTimeout(() => {
+        showToast(`Installing ${patch.name}...`, "info");
+      }, 4000);
+
+      setTimeout(() => {
+        showToast(`Patch ${patch.id} installed successfully!`, "success");
+        setAvailablePatches((prev) =>
+          prev.map((p) =>
+            p.id === patch.id ? { ...p, status: "installed" } : p
+          )
+        );
+      }, 6000);
+    } else {
+      showToast(`Manual execution mode selected for ${patch.id}`, "info");
+      showToast("Follow the manual steps displayed in the script", "info");
+    }
+  };
+
+  const handleSaveWorkflow = (workflowData) => {
+    const newWorkflow = {
+      id: `WF-${String(workflows.length + 1).padStart(3, "0")}`,
+      ...workflowData,
+      lastRun: "Never",
+      status: "active",
+    };
+
+    setWorkflows([...workflows, newWorkflow]);
+    setShowCreateWorkflowModal(false);
+    showToast("Workflow created successfully", "success");
+  };
+
   const handleExportReport = () => {
-    // Create Excel-style CSV
     const csvContent = [
       ["AURA Patch Management Report"],
       ["Generated:", new Date().toLocaleString()],
@@ -307,7 +837,7 @@ const PatchManagement = () => {
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold" style={{ color: "#123458" }}>
                 Patch Management
               </h1>
               <p className="mt-2 text-gray-600">
@@ -326,6 +856,13 @@ const PatchManagement = () => {
                   }`}
                 />
                 Refresh
+              </button>
+              <button
+                onClick={handleViewWorkflows}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
+              >
+                <Shield className="w-4 h-4 inline mr-2" />
+                Workflows
               </button>
               <button
                 onClick={handleConfigure}
@@ -487,50 +1024,69 @@ const PatchManagement = () => {
             </div>
           </div>
 
-          {/* Activity Log */}
+          {/* Available Patches */}
           <div className="bg-white rounded-xl shadow-sm">
             <div className="p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                Recent Activity
+                Available Patches
               </h3>
             </div>
 
             <div className="divide-y divide-gray-200">
-              {activityLog.map((activity) => (
-                <div key={activity.id} className="p-4">
-                  <div className="flex items-start space-x-3">
-                    <div
-                      className={`p-2 rounded-full ${
-                        activity.status === "success"
-                          ? "bg-green-100"
-                          : activity.status === "in-progress"
-                          ? "bg-blue-100"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      {activity.status === "success" ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      ) : activity.status === "in-progress" ? (
-                        <Activity className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-gray-600" />
-                      )}
+              {availablePatches.map((patch) => (
+                <div
+                  key={patch.id}
+                  className="p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-gray-900">
+                            {patch.id}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              patch.severity === "critical"
+                                ? "bg-red-100 text-red-800"
+                                : patch.severity === "high"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {patch.severity}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {patch.type}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-900 mb-1">
+                          {patch.name}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {patch.description}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-gray-900">
-                          {activity.action}
-                        </p>
-                        <div className="flex items-center space-x-1 text-xs text-gray-600">
-                          <User className="w-3 h-3" />
-                          <span>{activity.user}</span>
-                        </div>
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center space-x-4">
+                        <span>Size: {patch.size}</span>
+                        <span>Released: {patch.releaseDate}</span>
+                        <span>
+                          Restart: {patch.requiresRestart ? "Yes" : "No"}
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-600">{activity.device}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {activity.timestamp}
-                      </p>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleViewPatchDetails(patch)}
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center justify-center space-x-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View Details & Execute</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -548,7 +1104,7 @@ const PatchManagement = () => {
               </h3>
             </div>
             <div className="p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <button
                   onClick={handleDeployAll}
                   className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
@@ -569,6 +1125,13 @@ const PatchManagement = () => {
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Rollback</span>
+                </button>
+                <button
+                  onClick={handleViewWorkflows}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors hover:bg-gray-300"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Workflows</span>
                 </button>
                 <button
                   onClick={handleExportReport}
@@ -687,6 +1250,127 @@ const PatchManagement = () => {
         </div>
       </Modal>
 
+      {/* Workflows Modal */}
+      <Modal
+        isOpen={showWorkflowModal}
+        onClose={() => setShowWorkflowModal(false)}
+        title="Patch Workflows"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Manage your patch deployment workflows
+            </p>
+            <button
+              onClick={handleCreateWorkflow}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+            >
+              <Play className="w-4 h-4 inline mr-1" />
+              Create Workflow
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {workflows.map((workflow) => (
+              <div
+                key={workflow.id}
+                className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {workflow.name}
+                      </h4>
+                      <p className="text-xs text-gray-500">{workflow.id}</p>
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      workflow.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {workflow.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Type:</span>
+                    <span className="ml-2 text-gray-900">{workflow.type}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Patches:</span>
+                    <span className="ml-2 text-gray-900">
+                      {workflow.patches}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Devices:</span>
+                    <span className="ml-2 text-gray-900">
+                      {workflow.devices}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Schedule:</span>
+                    <span className="ml-2 text-gray-900">
+                      {workflow.schedule}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    Last run: {workflow.lastRun}
+                  </span>
+                  <div className="flex space-x-2">
+                    <button className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                      Edit
+                    </button>
+                    <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
+                      Run Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Workflow Modal */}
+      <Modal
+        isOpen={showCreateWorkflowModal}
+        onClose={() => setShowCreateWorkflowModal(false)}
+        title="Create New Workflow"
+        size="lg"
+      >
+        <CreateWorkflowForm
+          onSave={handleSaveWorkflow}
+          onCancel={() => setShowCreateWorkflowModal(false)}
+        />
+      </Modal>
+
+      {/* Patch Details Modal */}
+      {selectedPatch && (
+        <Modal
+          isOpen={showPatchDetailsModal}
+          onClose={() => setShowPatchDetailsModal(false)}
+          title={`Patch Details: ${selectedPatch.id}`}
+          size="2xl"
+        >
+          <PatchDetailsContent
+            patch={selectedPatch}
+            onExecute={handleExecutePatch}
+            generateScript={generateAIScript}
+          />
+        </Modal>
+      )}
+
       <style>{`
         @keyframes slide-in {
           from {
@@ -705,5 +1389,4 @@ const PatchManagement = () => {
     </div>
   );
 };
-
 export default PatchManagement;

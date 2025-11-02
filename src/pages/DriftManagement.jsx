@@ -709,8 +709,7 @@ const DriftManagement = () => {
               </button>
               <button
                 onClick={() => setShowConfigModal(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-                style={{ backgroundColor: "#123458", color: "#F1EFEC" }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
               >
                 <Settings className="w-4 h-4 inline mr-2" />
                 Configure
@@ -992,8 +991,7 @@ const DriftManagement = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 <button
                   onClick={handleBulkRestore}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-                  style={{ backgroundColor: "#123458", color: "#F1EFEC" }}
+                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Bulk Restore</span>

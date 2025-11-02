@@ -1,16 +1,16 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import PatchManagement from './pages/PatchManagement';
-import IntelligentAlerts from './pages/IntelligentAlerts';
-import ResourceMonitor from './pages/ResourceMonitor';
-import DriftManagement from './pages/DriftManagement';
-
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import PatchManagement from "./pages/PatchManagement";
+import IntelligentAlerts from "./pages/IntelligentAlerts";
+import ResourceMonitor from "./pages/ResourceMonitor";
+import DriftManagement from "./pages/DriftManagement";
+import Installation from "./pages/Installation";
 
 function App() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F1EFEC' }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F1EFEC" }}>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -18,6 +18,7 @@ function App() {
         <Route path="/intelligent-alerts" element={<IntelligentAlerts />} />
         <Route path="/resource-monitor" element={<ResourceMonitor />} />
         <Route path="/drift-management" element={<DriftManagement />} />
+        <Route path="/installation" element={<Installation />} />
       </Routes>
     </div>
   );

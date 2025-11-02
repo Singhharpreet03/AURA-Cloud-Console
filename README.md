@@ -1,1 +1,1 @@
-demo
+Central Dashboard
