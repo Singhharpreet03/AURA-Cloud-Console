@@ -17,7 +17,150 @@ import {
   Activity,
   Info,
   Download,
+  EyeOff,
 } from "lucide-react";
+
+
+
+/* ---------------- SecurityAuth component ---------------- */
+const SecurityAuth = ({ onSubmit }) => {
+  const [password, setPassword] = useState("");
+  const [visible, setVisible] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (onSubmit) onSubmit(password);
+  };
+
+  return (
+    <div
+      className="rounded-lg border p-4"
+      style={{ backgroundColor: "#FFF9E6", borderColor: "#F2E6B8" }}
+    >
+      <div className="flex items-start space-x-3 mb-3">
+        <div style={{ color: "#A37A00" }}>
+          <AlertTriangle className="w-5 h-5" />
+        </div>
+        <div>
+          <h4 className="font-semibold" style={{ color: "#6B4A00" }}>
+            Security Authentication Required
+          </h4>
+          <p className="text-sm opacity-80" style={{ color: "#6B4A00" }}>
+            To enable auto-run, please enter your admin password. This ensures secure automated execution.
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-3">
+        <label className="block text-sm mb-2" style={{ color: "#123458", fontWeight: 600 }}>
+          Admin Password *
+        </label>
+
+        <div className="relative">
+          <input
+            type={visible ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your admin password"
+            className="w-full px-4 py-3 rounded-lg border text-sm focus:outline-none focus:ring-2"
+            style={{
+              borderColor: "#2B2B2B",
+              backgroundColor: "#FFFFFF",
+              color: "#334155",
+            }}
+            aria-label="Admin password"
+          />
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2"
+            aria-label={visible ? "Hide password" : "Show password"}
+          >
+            {visible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-end">
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-md font-medium"
+            style={{ backgroundColor: "#123458", color: "#F1EFEC" }}
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+/* ---------------- RAGAlert component ---------------- */
+/* Renders alerts where each alert has `segments` describing additions/deletions/neutral text */
+const RAGAlert = ({ alerts = [] }) => {
+  const getBg = (severity) => {
+    if (severity === "high") return "#FEF2F2";
+    if (severity === "medium") return "#FFFBEB";
+    return "#ECFDF5";
+  };
+  const getBorderColor = (severity) => {
+    if (severity === "high") return "#FCA5A5";
+    if (severity === "medium") return "#FDE68A";
+    return "#86EFAC";
+  };
+
+  return (
+    <div className="space-y-3">
+      {alerts.map((a) => (
+        <div
+          key={a.id}
+          className="p-3 rounded-lg border"
+          style={{ backgroundColor: getBg(a.severity), borderColor: getBorderColor(a.severity) }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <Activity className="w-4 h-4" />
+              <h5 className="font-semibold" style={{ color: "#123458" }}>{a.title}</h5>
+            </div>
+            <div className="text-xs font-medium opacity-80">{(a.severity || "low").toUpperCase()}</div>
+          </div>
+
+          <div className="text-sm" style={{ color: "#334155" }}>
+            {a.segments.map((s, idx) => {
+              if (s.type === "add") {
+                return (
+                  <span key={idx} className="px-1 py-0.5 rounded" style={{ backgroundColor: "#ECFDF5", color: "#065F46", marginRight: 6 }}>
+                    +{s.text}
+                  </span>
+                );
+              } else if (s.type === "del") {
+                return (
+                  <span key={idx} className="px-1 py-0.5 rounded" style={{ backgroundColor: "#FEE2E2", color: "#991B1B", marginRight: 6 }}>
+                    -{s.text}
+                  </span>
+                );
+              } else {
+                return (
+                  <span key={idx} style={{ marginRight: 6 }}>
+                    {s.text}
+                  </span>
+                );
+              }
+            })}
+          </div>
+
+          <div className="mt-3 flex items-center justify-end space-x-2">
+            <button className="text-sm px-3 py-1 rounded" style={{ border: "1px solid #D1D5DB", background: "transparent" }}>
+              Resolve
+            </button>
+            <button className="text-sm px-3 py-1 rounded" style={{ backgroundColor: "#123458", color: "#F1EFEC" }}>
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // Toast Notification Component
 const Toast = ({ message, type = "info", onClose }) => {
@@ -103,6 +246,12 @@ const IntelligentAlerts = () => {
   const [toast, setToast] = useState(null);
   const [showAutoResolveModal, setShowAutoResolveModal] = useState(false);
   const [showSecurityScanModal, setShowSecurityScanModal] = useState(false);
+  const [ragPreview, setRagPreview]       = useState(null);   // {steps,history}
+  const [showRagModal, setShowRagModal]   = useState(false);
+  const [workflowLogs, setWorkflowLogs]   = useState([]);
+  const [showWorkflow, setShowWorkflow]   = useState(false);
+  const [showAuth, setShowAuth]           = useState(false);
+  const [authInput, setAuthInput]         = useState("");
   const [alerts, setAlerts] = useState([
     {
       id: "ALT-001",
@@ -341,6 +490,88 @@ const IntelligentAlerts = () => {
     avgResolutionTime: "4.2m",
   };
 
+/* ---- RAG PREVIEW ---- */
+const openRagPreview = () => {
+  const alert = alerts.find((a) => a.id === selectedAlert);
+  if (!alert || !alert.autoResolvable) {
+    showToast("Cannot auto-resolve this alert", "warning");
+    return;
+  }
+  setRagPreview({
+    steps: [
+      "1.  Create configuration backup",
+      "2.  Restart Apache service",
+      "3.  Enable connection-throttling module",
+      "4.  Validate health-check metrics",
+    ],
+    history:
+      "An identical CPU-spike pattern was seen on SRV-Web-03 on 2024-01-12 at 09:14. " +
+      "The same 4-step workflow brought CPU down from 97 % to 22 % within 2 minutes.",
+  });
+  setShowRagModal(true);
+};
+
+const openRagPreviewBulk = () => {
+  const resolvable = alerts.filter(a => a.autoResolvable && a.status === "active");
+  if (resolvable.length === 0) {
+    showToast("No auto-resolvable alerts", "info");
+    return;
+  }
+  setRagPreview({
+    steps: [
+      "1. Create configuration backup on each device",
+      "2. Restart affected services in rolling order",
+      "3. Enable connection-throttling modules",
+      "4. Validate health-check metrics fleet-wide"
+    ],
+    history: `Last night the same CPU-spike cluster occurred on ${resolvable.length} nodes; the above 4-step workflow reduced load by 80 % within 3 minutes.`
+  });
+  setShowRagModal(true);
+};
+
+const startResolution = () => {
+  setShowRagModal(false);
+  setShowAuth(true);
+};
+
+const checkAuth = () => {
+  if (authInput.trim() === "1111") {
+    setShowAuth(false);
+    runWorkflow();
+  } else {
+    showToast("Wrong PIN", "error");
+  }
+};
+
+/* ---- WORKFLOW EXECUTION ---- */
+const runWorkflow = () => {
+  setWorkflowLogs([]);
+  setShowWorkflow(true);
+  const steps = [
+    "Authenticating to target device …",
+    "Backing-up current configuration …",
+    "Restarting Apache service …",
+    "Enabling connection-throttling module …",
+    "Waiting for service stability (5 s) …",
+    "Verifying health-check metrics …",
+  ];
+  steps.forEach((txt, idx) =>
+    setTimeout(() => {
+      setWorkflowLogs((p) => [...p, { t: new Date(), txt }]);
+      if (idx === steps.length - 1) {
+        setTimeout(() => {
+          setShowWorkflow(false);
+          confirmAutoResolve();
+          showToast("Alert resolved via Automated Resolution", "success");
+        }, 1000);
+      }
+    }, idx * 1200)
+  );
+};
+
+
+
+
   const getSeverityColor = (severity) => {
     switch (severity) {
       case "critical":
@@ -425,7 +656,7 @@ const IntelligentAlerts = () => {
                 Refresh
               </button>
               <button
-                onClick={handleAutoResolveAll}
+                onClick={openRagPreviewBulk}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
               >
                 <Bot className="w-4 h-4 inline mr-2" />
@@ -606,7 +837,7 @@ const IntelligentAlerts = () => {
                       {selectedAlertData.autoResolvable &&
                         selectedAlertData.status === "active" && (
                           <button
-                            onClick={handleAutoResolveAlert}
+                            onClick={openRagPreview}
                             className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
                           >
                             <Bot className="w-4 h-4 inline mr-1" />
@@ -738,7 +969,7 @@ const IntelligentAlerts = () => {
             <div className="p-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button
-                  onClick={handleAutoResolveAll}
+                  onClick={openRagPreviewBulk}
                   className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
                 >
                   <Bot className="w-4 h-4" />
@@ -855,6 +1086,121 @@ const IntelligentAlerts = () => {
           </div>
         </div>
       </Modal>
+
+<Modal
+        isOpen={showRagModal}
+        onClose={() => setShowRagModal(false)}
+        title="RAG Insight – Similar Incident Found"
+        size="lg"
+      >
+        {ragPreview && (
+          <div className="space-y-4">
+            <div className="text-sm text-gray-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p>{ragPreview.history}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-3 text-gray-900">Steps that will be executed:</h4>
+              <RAGAlert alerts={[
+                {
+                  id: "step-1",
+                  title: "Configuration Backup",
+                  severity: "low",
+                  segments: [
+                    { type: "neutral", text: "Create" },
+                    { type: "add", text: "backup" },
+                    { type: "neutral", text: "of current configuration" }
+                  ]
+                },
+                {
+                  id: "step-2", 
+                  title: "Service Restart",
+                  severity: "medium",
+                  segments: [
+                    { type: "neutral", text: "Restart" },
+                    { type: "add", text: "Apache service" },
+                    { type: "del", text: "old process" }
+                  ]
+                },
+                {
+                  id: "step-3",
+                  title: "Enable Protection",
+                  severity: "low", 
+                  segments: [
+                    { type: "neutral", text: "Enable" },
+                    { type: "add", text: "connection-throttling" },
+                    { type: "neutral", text: "module" }
+                  ]
+                },
+                {
+                  id: "step-4",
+                  title: "Health Validation",
+                  severity: "low",
+                  segments: [
+                    { type: "neutral", text: "Validate" },
+                    { type: "add", text: "health metrics" },
+                    { type: "neutral", text: "and performance" }
+                  ]
+                }
+              ]} />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                onClick={() => setShowRagModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startResolution}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+              >
+                Start Resolution
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* -------- AUTH GATE -------- */}
+      <Modal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        title="Auto-Resolve Workflow"
+        size="md"
+      >
+        <SecurityAuth onSubmit={(pwd) => {
+          if (pwd === "1111") {
+            setShowAuth(false);
+            runWorkflow();
+          } else {
+            showToast("Wrong password", "error");
+          }
+        }} />
+      </Modal>
+
+      {/* -------- WORKFLOW PROGRESS -------- */}
+      {showWorkflow && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 w-[500px]">
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <Bot className="w-5 h-5 mr-2 text-blue-600" />
+              Applying Automated Resolution
+            </h3>
+            <div className="max-h-64 overflow-auto space-y-2">
+              {workflowLogs.map((l, i) => (
+                <div key={i} className="text-sm text-gray-700">
+                  <span className="text-gray-400">{l.t.toLocaleTimeString()}</span> – {l.txt}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes slide-in {

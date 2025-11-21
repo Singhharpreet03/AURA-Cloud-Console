@@ -7,6 +7,7 @@ import IntelligentAlerts from "./pages/IntelligentAlerts";
 import ResourceMonitor from "./pages/ResourceMonitor";
 import DriftManagement from "./pages/DriftManagement";
 import Installation from "./pages/Installation";
+import PolicyManagement from "./pages/PolicyManagement";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/resource-monitor" element={<ResourceMonitor />} />
         <Route path="/drift-management" element={<DriftManagement />} />
         <Route path="/installation" element={<Installation />} />
+        <Route path="/policy-management" element={<PolicyManagement />} />
       </Routes>
     </div>
   );

@@ -143,33 +143,24 @@ const Navbar = () => {
                   className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50"
                   style={{ backgroundColor: userMenuBg }}
                 >
-                  <a
-                    href="#"
-                    className="flex items-center px-4 py-2 text-sm hover:bg-opacity-10"
-                    style={{ color: "#F1EFEC" }}
-                  >
-                    <User className="w-4 h-4 mr-3" />
-                    Profile
-                  </a>
-                  <a
-                    href="#"
-                    className="flex items-center px-4 py-2 text-sm hover:bg-opacity-10"
-                    style={{ color: "#F1EFEC" }}
-                  >
-                    <Settings className="w-4 h-4 mr-3" />
-                    Settings
-                  </a>
-                  <hr
-                    className="my-1"
-                    style={{ borderColor: "rgba(255,255,255,0.1)" }}
-                  />
-                  <a
-                    href="#"
-                    className="flex items-center px-4 py-2 text-sm hover:bg-opacity-10"
-                    style={{ color: "#F1EFEC" }}
-                  >
-                    <LogOut className="w-4 h-4 mr-3" />
-                    Sign Out
+                <a href="#" className="flex items-center px-4 py-2 text-sm hover:bg-white/10" style={{ color: "#4889c9ff" }}>
+                  <User className="w-4 h-4 mr-3" />Profile
+                </a>
+                <Link
+                  to="/policy-management"
+                  className="flex items-center px-4 py-2 text-sm hover:bg-white/10"
+                  style={{ color: "#4889c9ff" }}
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  <Shield className="w-4 h-4 mr-3" />Policy Management
+                </Link>
+              
+                <a href="#" className="flex items-center px-4 py-2 text-sm hover:bg-white/10" style={{ color: "#4889c9ff" }}>
+                  <Settings className="w-4 h-4 mr-3" />Settings
+                </a>
+                  <hr className="my-1 border-white/10" />
+                  <a href="#" className="flex items-center px-4 py-2 text-sm text-red-400 hover:bg-white/10">
+                    <LogOut className="w-4 h-4 mr-3" />Sign Out
                   </a>
                 </div>
               )}
