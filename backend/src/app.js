@@ -4,7 +4,7 @@ import cors from "cors";
 import driftRoutes from "./routes/driftRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import patchRoutes from "./routes/patchRoutes.js";
-
+import metricsRoutes from "./routes/metricsRoutes.js"; 
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -15,5 +15,6 @@ app.get("/test", (req, res) => {
 app.use("/api/drifts", driftRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/patches", patchRoutes);
+app.use("/api/metrics", metricsRoutes);
 
 export default app;
