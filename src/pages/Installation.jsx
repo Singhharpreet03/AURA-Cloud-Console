@@ -11,8 +11,10 @@ import {
   Apple,
   Monitor,
   Clock,
+  BadgeInfo,
+  Settings,
 } from "lucide-react";
-
+import { BookOpenText } from "lucide-react";
 const Installation = () => {
   const [selectedOS, setSelectedOS] = useState("linux");
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -474,10 +476,11 @@ const Installation = () => {
                     style={{ borderColor: "#D4C9BE" }}
                   >
                     <h4
-                      className="font-semibold mb-2"
+                      className="font-semibold mb-2 flex items-center gap-2"
                       style={{ color: "#123458" }}
                     >
-                      📚 Documentation
+                      <BookOpenText className="w-4 h-4" />
+                      Documentation
                     </h4>
                     <p
                       className="text-sm mb-3 opacity-70"
@@ -499,10 +502,11 @@ const Installation = () => {
                     style={{ borderColor: "#D4C9BE" }}
                   >
                     <h4
-                      className="font-semibold mb-2"
+                      className="font-semibold mb-2 flex items-center gap-2"
                       style={{ color: "#123458" }}
                     >
-                      🔧 Configuration
+                      <Settings className="w-4 h-4" />
+                      Configuration
                     </h4>
                     <p
                       className="text-sm mb-3 opacity-70"
@@ -523,10 +527,11 @@ const Installation = () => {
                     style={{ borderColor: "#D4C9BE" }}
                   >
                     <h4
-                      className="font-semibold mb-2"
+                      className="font-semibold mb-2 flex items-center gap-2"
                       style={{ color: "#123458" }}
                     >
-                      💬 Support
+                      <BadgeInfo className="w-4 h-4" />
+                      Support
                     </h4>
                     <p
                       className="text-sm mb-3 opacity-70"
