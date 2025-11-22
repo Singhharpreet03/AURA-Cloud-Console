@@ -11,6 +11,7 @@ import {
   Users,
   Server,
   Clock,
+  LayoutDashboard,
 } from "lucide-react";
 
 const Home = () => {
