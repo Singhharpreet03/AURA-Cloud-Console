@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { generateScriptUsingGemini } from "../services/geminiService";
 import {
   Bot,
   Terminal,
@@ -96,6 +97,62 @@ const WorkflowWizard = ({ isOpen, onClose, onComplete }) => {
     }
   };
 
+  //   const handleGenerateScript = async () => {
+  //     if (!workflowData.aiPrompt.trim()) {
+  //       setErrors({ aiPrompt: "Please enter a prompt" });
+  //       return;
+  //     }
+
+  //     setIsGenerating(true);
+  //     setErrors({});
+
+  //     // Simulate AI generation
+  //     setTimeout(() => {
+  //       const generatedScript = `#!/bin/bash
+  // # AI-Generated Workflow Script
+  // # Prompt: ${workflowData.aiPrompt}
+  // # Generated: ${new Date().toLocaleString()}
+
+  // echo "Starting workflow: ${workflowData.name}"
+
+  // # Pre-deployment checks
+  // echo "Running pre-deployment checks..."
+  // check_system_health() {
+  //   systemctl status sshd
+  //   df -h | grep -v tmpfs
+  //   free -m
+  // }
+
+  // # Patch deployment
+  // deploy_patches() {
+  //   echo "Deploying ${workflowData.patches} patches to ${
+  //         workflowData.devices
+  //       } devices..."
+
+  //   for patch in patch_list; do
+  //     echo "Installing patch: $patch"
+  //     # Add patch installation logic here
+  //     apt-get update && apt-get install -y $patch
+  //   done
+  // }
+
+  // # Post-deployment validation
+  // validate_deployment() {
+  //   echo "Validating deployment..."
+  //   # Add validation logic here
+  // }
+
+  // # Main execution
+  // check_system_health
+  // deploy_patches
+  // validate_deployment
+
+  // echo "Workflow completed successfully!"`;
+
+  //       setWorkflowData({ ...workflowData, generatedScript });
+  //       setIsGenerating(false);
+  //     }, 2000);
+  //   };
   const handleGenerateScript = async () => {
     if (!workflowData.aiPrompt.trim()) {
       setErrors({ aiPrompt: "Please enter a prompt" });
@@ -105,52 +162,69 @@ const WorkflowWizard = ({ isOpen, onClose, onComplete }) => {
     setIsGenerating(true);
     setErrors({});
 
-    // Simulate AI generation
-    setTimeout(() => {
-      const generatedScript = `#!/bin/bash
-# AI-Generated Workflow Script
-# Prompt: ${workflowData.aiPrompt}
+    try {
+      console.log("🔵 Calling Gemini for workflow script generation...");
+      console.log("🔵 Prompt:", workflowData.aiPrompt);
+
+      // Create a workflow-specific patch object for Gemini
+      const workflowPatch = {
+        id: `WORKFLOW-${Date.now()}`,
+        name: workflowData.name || "Custom Workflow",
+        type: workflowData.type || "Custom",
+        severity: "medium",
+        size: "-",
+        releaseDate: new Date().toLocaleDateString(),
+        description: workflowData.aiPrompt,
+        requiresRestart: false,
+        // Add workflow-specific details
+        patches: workflowData.patches,
+        devices: workflowData.devices,
+        schedule: workflowData.schedule,
+      };
+
+      // Call Gemini to generate the script
+      const result = await generateScriptUsingGemini(workflowPatch);
+
+      console.log("✅ Gemini returned script:", result);
+
+      // Use the automated script from Gemini
+      const generatedScript =
+        result.automated ||
+        `#!/bin/bash
+# Workflow: ${workflowData.name}
 # Generated: ${new Date().toLocaleString()}
+# Prompt: ${workflowData.aiPrompt}
 
-echo "Starting workflow: ${workflowData.name}"
-
-# Pre-deployment checks
-echo "Running pre-deployment checks..."
-check_system_health() {
-  systemctl status sshd
-  df -h | grep -v tmpfs
-  free -m
-}
-
-# Patch deployment
-deploy_patches() {
-  echo "Deploying ${workflowData.patches} patches to ${
-        workflowData.devices
-      } devices..."
-  
-  for patch in patch_list; do
-    echo "Installing patch: $patch"
-    # Add patch installation logic here
-    apt-get update && apt-get install -y $patch
-  done
-}
-
-# Post-deployment validation
-validate_deployment() {
-  echo "Validating deployment..."
-  # Add validation logic here
-}
-
-# Main execution
-check_system_health
-deploy_patches
-validate_deployment
-
-echo "Workflow completed successfully!"`;
+echo "Starting workflow execution..."
+${result.automated || "# Script generation failed"}
+echo "Workflow completed!"`;
 
       setWorkflowData({ ...workflowData, generatedScript });
       setIsGenerating(false);
-    }, 2000);
+    } catch (error) {
+      console.error("❌ Error generating workflow script:", error);
+
+      // Fallback to a basic template if Gemini fails
+      const fallbackScript = `#!/bin/bash
+# Workflow: ${workflowData.name}
+# Generated: ${new Date().toLocaleString()}
+# Prompt: ${workflowData.aiPrompt}
+# Note: AI generation failed, using fallback template
+
+echo "Starting workflow: ${workflowData.name}"
+echo "Error: Could not generate AI script - ${error.message}"
+
+# Add your custom commands here based on the prompt
+# Prompt was: ${workflowData.aiPrompt}
+
+echo "Workflow completed!"`;
+
+      setWorkflowData({ ...workflowData, generatedScript: fallbackScript });
+      setErrors({
+        aiPrompt: `AI generation failed: ${error.message}. Using fallback template.`,
+      });
+      setIsGenerating(false);
+    }
   };
 
   const handleCopyScript = () => {
