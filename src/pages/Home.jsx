@@ -92,7 +92,7 @@ const Home = () => {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link
-              to="/patch-management"
+              to="/installation"
               className="group px-10 py-4 rounded-lg font-semibold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
               // Start with solid dark blue box
               style={{

@@ -505,7 +505,7 @@ const openRagPreview = () => {
       "4.  Validate health-check metrics",
     ],
     history:
-      "An identical CPU-spike pattern was seen on SRV-Web-03 on 2024-01-12 at 09:14. " +
+      "An identical CPU-spike pattern was seen on SRV-Web-03 on 2025-09-12 at 09:14. " +
       "The same 4-step workflow brought CPU down from 97 % to 22 % within 2 minutes.",
   });
   setShowRagModal(true);
