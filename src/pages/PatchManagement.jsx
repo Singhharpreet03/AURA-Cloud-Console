@@ -1222,13 +1222,7 @@ const PatchManagement = () => {
                 />
                 Refresh
               </button>
-              <button
-                onClick={handleTestGemini}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-purple-700"
-              >
-                <Bot className="w-4 h-4 inline mr-2" />
-                Test AI
-              </button>
+
               <button
                 onClick={handleViewWorkflows}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
