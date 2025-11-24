@@ -27,6 +27,7 @@ const Navbar = () => {
     { path: "/intelligent-alerts", label: "Intelligent Alerts" },
     { path: "/resource-monitor", label: "Resource Monitor" },
     { path: "/drift-management", label: "Drift Management" },
+    { path: "/integration", label: "Integrations" },
     { path: "/installation", label: "Installation" },
   ];
 

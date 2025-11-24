@@ -11,6 +11,7 @@ import PolicyManagement from "./pages/PolicyManagement";
 // Import the new components
 import LoginPage from "./pages/Login.jsx"; 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Integrations from "./pages/Integration";
 
 function App() {
   return (
@@ -69,6 +70,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PolicyManagement />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/integration" 
+          element={
+            <ProtectedRoute>
+              <Integrations />
             </ProtectedRoute>
           } 
         />

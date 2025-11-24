@@ -1,4 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import WorkflowWizard from "../components/WorkflowWizard";
+import DeployAllModal from "../components/DeployAllModal";
+import DetailedPatchLogs from "../components/DetailedPatchLogs"; // adjust path if needed
+import { generateScriptUsingGemini } from "../services/geminiService";
+import { testGeminiConnection } from "../services/geminiService";
+
+// import * as patchAPI from "../services/patchService";
+import * as patchAPI from "../services/patchservice";
 import {
   Shield,
   CheckCircle,
@@ -9,7 +17,6 @@ import {
   RotateCcw,
   Download,
   Settings,
-  Filter,
   RefreshCw,
   Server,
   Activity,
@@ -104,10 +111,242 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
 };
 
 // Patch Details Content Component
+// const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
+//   const [executionMode, setExecutionMode] = useState("agent");
+//   const [scriptType, setScriptType] = useState("automated");
+//   const scripts = generateScript(patch);
+
+//   const copyToClipboard = (text) => {
+//     navigator.clipboard.writeText(text);
+//   };
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Patch Information */}
+//       <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+//         <div>
+//           <span className="text-sm text-gray-600">Type:</span>
+//           <span className="ml-2 font-medium text-gray-900">{patch.type}</span>
+//         </div>
+//         <div>
+//           <span className="text-sm text-gray-600">Severity:</span>
+//           <span
+//             className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+//               patch.severity === "critical"
+//                 ? "bg-red-100 text-red-800"
+//                 : patch.severity === "high"
+//                 ? "bg-orange-100 text-orange-800"
+//                 : "bg-yellow-100 text-yellow-800"
+//             }`}
+//           >
+//             {patch.severity}
+//           </span>
+//         </div>
+//         <div>
+//           <span className="text-sm text-gray-600">Size:</span>
+//           <span className="ml-2 font-medium text-gray-900">{patch.size}</span>
+//         </div>
+//         <div>
+//           <span className="text-sm text-gray-600">Release Date:</span>
+//           <span className="ml-2 font-medium text-gray-900">
+//             {patch.releaseDate}
+//           </span>
+//         </div>
+//         <div className="col-span-2">
+//           <span className="text-sm text-gray-600">Description:</span>
+//           <p className="mt-1 text-sm text-gray-900">{patch.description}</p>
+//         </div>
+//         <div className="col-span-2">
+//           <span className="text-sm text-gray-600">Restart Required:</span>
+//           <span className="ml-2 font-medium text-gray-900">
+//             {patch.requiresRestart ? "Yes" : "No"}
+//           </span>
+//         </div>
+//       </div>
+
+//       {/* Execution Mode Selection */}
+//       <div>
+//         <h4 className="font-semibold text-gray-900 mb-3">Execution Mode</h4>
+//         <div className="grid grid-cols-2 gap-3">
+//           <button
+//             onClick={() => setExecutionMode("agent")}
+//             className={`p-4 border-2 rounded-lg text-left transition-all ${
+//               executionMode === "agent"
+//                 ? "border-blue-500 bg-blue-50"
+//                 : "border-gray-200 hover:border-gray-300"
+//             }`}
+//           >
+//             <div className="flex items-center space-x-3 mb-2">
+//               <Bot className="w-5 h-5 text-blue-600" />
+//               <span className="font-semibold text-gray-900">
+//                 AI Agent (Automated)
+//               </span>
+//             </div>
+//             <p className="text-sm text-gray-600">
+//               Let the AI agent handle the entire installation process
+//               automatically
+//             </p>
+//           </button>
+//           <button
+//             onClick={() => setExecutionMode("manual")}
+//             className={`p-4 border-2 rounded-lg text-left transition-all ${
+//               executionMode === "manual"
+//                 ? "border-blue-500 bg-blue-50"
+//                 : "border-gray-200 hover:border-gray-300"
+//             }`}
+//           >
+//             <div className="flex items-center space-x-3 mb-2">
+//               <User className="w-5 h-5 text-purple-600" />
+//               <span className="font-semibold text-gray-900">
+//                 Manual Execution
+//               </span>
+//             </div>
+//             <p className="text-sm text-gray-600">
+//               Follow manual steps and execute commands yourself
+//             </p>
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* Script Display */}
+//       <div>
+//         <div className="flex items-center justify-between mb-3">
+//           <h4 className="font-semibold text-gray-900">
+//             {executionMode === "agent" ? "AI-Generated" : "Manual"} Script
+//           </h4>
+//           <div className="flex space-x-2">
+//             <button
+//               onClick={() => setScriptType("automated")}
+//               className={`px-3 py-1 text-xs rounded ${
+//                 scriptType === "automated"
+//                   ? "bg-blue-600 text-white"
+//                   : "bg-gray-200 text-gray-700"
+//               }`}
+//             >
+//               Automated
+//             </button>
+//             <button
+//               onClick={() => setScriptType("manual")}
+//               className={`px-3 py-1 text-xs rounded ${
+//                 scriptType === "manual"
+//                   ? "bg-blue-600 text-white"
+//                   : "bg-gray-200 text-gray-700"
+//               }`}
+//             >
+//               Manual
+//             </button>
+//           </div>
+//         </div>
+
+//         <div className="relative">
+//           <pre className="p-4 bg-gray-900 text-green-400 rounded-lg overflow-x-auto text-sm font-mono">
+//             {scripts[scriptType]}
+//           </pre>
+//           <button
+//             onClick={() => copyToClipboard(scripts[scriptType])}
+//             className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
+//             title="Copy to clipboard"
+//           >
+//             <Copy className="w-4 h-4" />
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* AI Recommendations */}
+//       {executionMode === "agent" && (
+//         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+//           <div className="flex items-start space-x-3">
+//             <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+//             <div>
+//               <h5 className="font-semibold text-blue-900 mb-1">
+//                 AI Recommendation
+//               </h5>
+//               <p className="text-sm text-blue-800">
+//                 Based on system analysis, this patch can be safely installed
+//                 during the next maintenance window. The agent will:
+//               </p>
+//               <ul className="mt-2 space-y-1 text-sm text-blue-800">
+//                 <li>• Create a system restore point</li>
+//                 <li>• Download and verify patch integrity</li>
+//                 <li>• Install with optimal settings</li>
+//                 <li>• Monitor for any issues</li>
+//                 {patch.requiresRestart && (
+//                   <li>• Schedule restart during off-peak hours</li>
+//                 )}
+//               </ul>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Action Buttons */}
+//       <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+//         <button
+//           onClick={() => window.history.back()}
+//           className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+//         >
+//           Cancel
+//         </button>
+//         <button
+//           onClick={() => onExecute(patch, executionMode)}
+//           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center space-x-2"
+//         >
+//           {executionMode === "agent" ? (
+//             <>
+//               <Bot className="w-4 h-4" />
+//               <span>Execute with AI Agent</span>
+//             </>
+//           ) : (
+//             <>
+//               <Terminal className="w-4 h-4" />
+//               <span>Prepare Manual Execution</span>
+//             </>
+//           )}
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
 const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
+  const [loading, setLoading] = useState(true);
+  const [scripts, setScripts] = useState({
+    automated: "",
+    manual: "",
+  });
+
   const [executionMode, setExecutionMode] = useState("agent");
   const [scriptType, setScriptType] = useState("automated");
-  const scripts = generateScript(patch);
+
+  // useEffect(() => {
+  //   const loadScripts = async () => {
+  //     setLoading(true);
+  //     const result = await generateScript(patch); // <-- Gemini async call
+  //     setScripts(result);
+  //     setLoading(false);
+  //   };
+  //   loadScripts();
+  // }, [patch]);
+  useEffect(() => {
+    const loadScripts = async () => {
+      setLoading(true);
+      try {
+        console.log("Calling Gemini API for patch:", patch.id);
+        const result = await generateScriptUsingGemini(patch);
+        console.log("Received scripts from Gemini:", result);
+        setScripts(result);
+      } catch (error) {
+        console.error("Failed to generate scripts:", error);
+        // Set fallback scripts
+        setScripts({
+          automated: "# Error generating automated script",
+          manual: "# Error generating manual script",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadScripts();
+  }, [patch]);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -157,7 +396,7 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
         </div>
       </div>
 
-      {/* Execution Mode Selection */}
+      {/* Execution Mode */}
       <div>
         <h4 className="font-semibold text-gray-900 mb-3">Execution Mode</h4>
         <div className="grid grid-cols-2 gap-3">
@@ -176,10 +415,10 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
               </span>
             </div>
             <p className="text-sm text-gray-600">
-              Let the AI agent handle the entire installation process
-              automatically
+              Let the AI agent handle the installation automatically.
             </p>
           </button>
+
           <button
             onClick={() => setExecutionMode("manual")}
             className={`p-4 border-2 rounded-lg text-left transition-all ${
@@ -195,7 +434,7 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
               </span>
             </div>
             <p className="text-sm text-gray-600">
-              Follow manual steps and execute commands yourself
+              Follow manual steps and execute commands yourself.
             </p>
           </button>
         </div>
@@ -207,6 +446,7 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
           <h4 className="font-semibold text-gray-900">
             {executionMode === "agent" ? "AI-Generated" : "Manual"} Script
           </h4>
+
           <div className="flex space-x-2">
             <button
               onClick={() => setScriptType("automated")}
@@ -218,6 +458,7 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
             >
               Automated
             </button>
+
             <button
               onClick={() => setScriptType("manual")}
               className={`px-3 py-1 text-xs rounded ${
@@ -232,16 +473,25 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
         </div>
 
         <div className="relative">
-          <pre className="p-4 bg-gray-900 text-green-400 rounded-lg overflow-x-auto text-sm font-mono">
-            {scripts[scriptType]}
-          </pre>
-          <button
-            onClick={() => copyToClipboard(scripts[scriptType])}
-            className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
-            title="Copy to clipboard"
-          >
-            <Copy className="w-4 h-4" />
-          </button>
+          {loading ? (
+            <div className="p-4 bg-gray-900 text-yellow-300 rounded-lg text-sm font-mono">
+              Generating script using AI...
+            </div>
+          ) : (
+            <>
+              <pre className="p-4 bg-gray-900 text-green-400 rounded-lg overflow-x-auto text-sm font-mono">
+                {scripts[scriptType]}
+              </pre>
+
+              <button
+                onClick={() => copyToClipboard(scripts[scriptType])}
+                className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
+                title="Copy to clipboard"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -254,10 +504,12 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
               <h5 className="font-semibold text-blue-900 mb-1">
                 AI Recommendation
               </h5>
+
               <p className="text-sm text-blue-800">
-                Based on system analysis, this patch can be safely installed
-                during the next maintenance window. The agent will:
+                Based on system analysis, this patch is safe for automated
+                installation. The agent will:
               </p>
+
               <ul className="mt-2 space-y-1 text-sm text-blue-800">
                 <li>• Create a system restore point</li>
                 <li>• Download and verify patch integrity</li>
@@ -280,6 +532,7 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
         >
           Cancel
         </button>
+
         <button
           onClick={() => onExecute(patch, executionMode)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center space-x-2"
@@ -301,121 +554,6 @@ const PatchDetailsContent = ({ patch, onExecute, generateScript }) => {
   );
 };
 
-// Create Workflow Form Component
-const CreateWorkflowForm = ({ onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "Custom",
-    patches: 0,
-    devices: 0,
-    schedule: "Manual",
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-900">
-          Workflow Name *
-        </label>
-        <input
-          type="text"
-          required
-          className="w-full p-2 border border-gray-300 rounded-lg"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Monthly Security Updates"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-900">
-          Workflow Type
-        </label>
-        <select
-          className="w-full p-2 border border-gray-300 rounded-lg"
-          value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-        >
-          <option value="Predefined">Predefined</option>
-          <option value="Custom">Custom</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-900">
-            Number of Patches
-          </label>
-          <input
-            type="number"
-            min="0"
-            className="w-full p-2 border border-gray-300 rounded-lg"
-            value={formData.patches}
-            onChange={(e) =>
-              setFormData({ ...formData, patches: parseInt(e.target.value) })
-            }
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-900">
-            Target Devices
-          </label>
-          <input
-            type="number"
-            min="0"
-            className="w-full p-2 border border-gray-300 rounded-lg"
-            value={formData.devices}
-            onChange={(e) =>
-              setFormData({ ...formData, devices: parseInt(e.target.value) })
-            }
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-900">
-          Schedule
-        </label>
-        <select
-          className="w-full p-2 border border-gray-300 rounded-lg"
-          value={formData.schedule}
-          onChange={(e) =>
-            setFormData({ ...formData, schedule: e.target.value })
-          }
-        >
-          <option value="Manual">Manual</option>
-          <option value="Daily - 2:00 AM">Daily - 2:00 AM</option>
-          <option value="Weekly - Sunday 2:00 AM">
-            Weekly - Sunday 2:00 AM
-          </option>
-          <option value="Monthly - 1st Sunday">Monthly - 1st Sunday</option>
-        </select>
-      </div>
-
-      <div className="flex justify-end space-x-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-        >
-          Create Workflow
-        </button>
-      </div>
-    </form>
-  );
-};
-
 const PatchManagement = () => {
   const [selectedDevice, setSelectedDevice] = useState("WS-Marketing-01");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -426,6 +564,22 @@ const PatchManagement = () => {
   const [showCreateWorkflowModal, setShowCreateWorkflowModal] = useState(false);
   const [selectedPatch, setSelectedPatch] = useState(null);
   const [toast, setToast] = useState(null);
+  const [deployAllOpen, setDeployAllOpen] = useState(false);
+  const [deviceFilter, setDeviceFilter] = useState("All Devices");
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logsDevice, setLogsDevice] = useState(null);
+  const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [rollbackDevice, setRollbackDevice] = useState(null);
+  const [rollbackFromVersion, setRollbackFromVersion] = useState(null);
+  const [rollbackToVersion, setRollbackToVersion] = useState(null);
+  // Pause Modal States
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [devicesToPause, setDevicesToPause] = useState([]);
+  // Resume Modal States
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [devicesToResume, setDevicesToResume] = useState([]);
+
+  // Keep devices as mock (per your confirmation)
   const [devices, setDevices] = useState([
     {
       id: "WS-Marketing-01",
@@ -456,6 +610,7 @@ const PatchManagement = () => {
     },
   ]);
 
+  // workflows & availablePatches will now come from backend
   const [availablePatches, setAvailablePatches] = useState([
     {
       id: "KB5034441",
@@ -492,39 +647,61 @@ const PatchManagement = () => {
       status: "available",
     },
   ]);
+  const [workflows, setWorkflows] = useState([]);
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false);
+  const [loadingApps, setLoadingApps] = useState(false);
 
-  const [workflows, setWorkflows] = useState([
-    {
-      id: "WF-001",
-      name: "Windows Security Updates",
-      type: "Predefined",
-      patches: 8,
-      devices: 15,
-      schedule: "Weekly - Sunday 2:00 AM",
-      lastRun: "2024-01-14 02:00",
-      status: "active",
-    },
-    {
-      id: "WF-002",
-      name: "Database Server Maintenance",
-      type: "Custom",
-      patches: 3,
-      devices: 2,
-      schedule: "Monthly - 1st Sunday",
-      lastRun: "2024-01-07 03:00",
-      status: "active",
-    },
-  ]);
-
+  // -- toasts
   const showToast = (message, type = "info") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  // --- Load workflows and managed apps on mount
+  useEffect(() => {
+    const load = async () => {
+      setLoadingApps(true);
+
+      try {
+        const appsRes = await patchAPI.getManagedApps();
+        const appsObj = appsRes?.apps || {};
+        const appsArr = Object.entries(appsObj).map(([key, value]) => ({
+          id: key,
+          name: key,
+          description: value ?? "",
+          type: "Managed App",
+          severity: "medium",
+          size: "-",
+          releaseDate: "-",
+          requiresRestart: false,
+          status: "available",
+          version: value,
+        }));
+
+        // Merge mock patches with fetched apps
+        setAvailablePatches([...mockPatches, ...appsArr]);
+      } catch (err) {
+        console.error("getManagedApps", err);
+      } finally {
+        setLoadingApps(false);
+      }
+    };
+
+    load();
+  }, []);
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     showToast("Refreshing device data...", "info");
+
+    // still mock: update timestamps only
     setTimeout(() => {
+      setDevices((prevDevices) =>
+        prevDevices.map((d) => ({
+          ...d,
+          lastUpdate: new Date().toLocaleString(), // just update timestamp
+        }))
+      );
       setIsRefreshing(false);
       showToast("Device data refreshed successfully", "success");
     }, 1000);
@@ -534,46 +711,93 @@ const PatchManagement = () => {
     setShowConfigModal(true);
   };
 
-  const handleDeployAll = () => {
-    setShowDeployModal(true);
+  const handleTestGemini = async () => {
+    showToast("Testing Gemini connection...", "info");
+
+    const result = await testGeminiConnection();
+
+    if (result.success) {
+      showToast("Gemini connected successfully!", "success");
+      console.log("✅ Gemini response:", result.message);
+    } else {
+      showToast(`Gemini connection failed: ${result.error}`, "error");
+      console.error("❌ Gemini error:", result.error);
+    }
   };
 
   const handlePauseUpdates = () => {
-    setDevices(
-      devices.map((device) =>
-        device.status === "updating" ? { ...device, status: "paused" } : device
+    const updatingDevices = devices.filter((d) => d.status === "updating");
+
+    if (updatingDevices.length === 0) {
+      showToast("No devices are currently updating", "info");
+      return;
+    }
+
+    setDevicesToPause(updatingDevices);
+    setShowPauseModal(true);
+  };
+  const confirmResumeUpdates = () => {
+    setDevices((prev) =>
+      prev.map((device) =>
+        device.status === "paused"
+          ? { ...device, status: "updating", lastAction: "Resumed by user" }
+          : device
       )
     );
-    showToast("Updates paused for all devices", "warning");
+
+    setShowResumeModal(false);
+    showToast("Updates resumed for selected devices", "success");
+  };
+
+  const handleResumeUpdates = () => {
+    const pausedDevices = devices.filter((d) => d.status === "paused");
+
+    if (pausedDevices.length === 0) {
+      showToast("No paused devices to resume", "info");
+      return;
+    }
+
+    setDevicesToResume(pausedDevices);
+    setShowResumeModal(true);
+  };
+
+  const confirmPauseUpdates = () => {
+    setDevices((prev) =>
+      prev.map((device) =>
+        device.status === "updating"
+          ? { ...device, status: "paused", lastAction: "Paused by user" }
+          : device
+      )
+    );
+
+    setShowPauseModal(false);
+    showToast("Updates paused for selected devices", "warning");
+  };
+
+  const handleViewLogs = (device) => {
+    setLogsDevice(device); // set which device logs to show
+    setShowLogsModal(true); // open the modal
   };
 
   const handleRollback = () => {
-    const updatingDevice = devices.find(
+    // Find devices that are updating or paused
+    const updatingDevices = devices.filter(
       (d) => d.status === "updating" || d.status === "paused"
     );
-    if (updatingDevice) {
-      setDevices(
-        devices.map((device) =>
-          device.id === updatingDevice.id
-            ? { ...device, status: "rolling-back", progress: 0 }
-            : device
-        )
-      );
-      showToast(`Rolling back ${updatingDevice.name}...`, "info");
 
-      setTimeout(() => {
-        setDevices(
-          devices.map((device) =>
-            device.id === updatingDevice.id
-              ? { ...device, status: "healthy", progress: 100 }
-              : device
-          )
-        );
-        showToast("Rollback completed successfully", "success");
-      }, 2000);
-    } else {
+    if (updatingDevices.length === 0) {
       showToast("No active updates to rollback", "info");
+      return;
     }
+
+    // For simplicity, pick the first one or extend to multiple later
+    const deviceToRollback = updatingDevices[0];
+
+    // Set modal state
+    setRollbackDevice(deviceToRollback);
+    setRollbackFromVersion("v1.2.0"); // example: get from device patch info
+    setRollbackToVersion("v1.1.9"); // example: rollback target
+    setShowRollbackModal(true);
   };
 
   const handleViewPatchDetails = (patch) => {
@@ -589,94 +813,98 @@ const PatchManagement = () => {
     setShowWorkflowModal(true);
   };
 
-  const generateAIScript = (patch) => {
-    const scripts = {
-      KB5034441: {
-        automated: `# AI-Recommended Automated Script
-wusa.exe /quiet /norestart KB5034441.msu
-if ($LASTEXITCODE -eq 0) {
-  Write-Host "Patch installed successfully"
-  # Schedule restart during maintenance window
-  shutdown /r /t 7200 /c "Security update requires restart"
-} else {
-  Write-Error "Patch installation failed"
-}`,
-        manual: `# Manual Installation Steps
-1. Download KB5034441.msu from Windows Update Catalog
-2. Double-click the .msu file
-3. Follow the Windows Update Standalone Installer
-4. Restart when prompted
+  //   const generateAIScript = (patch) => {
+  //     // keep existing script generator (simple lookup)
+  //     const scripts = {
+  //       KB5034441: {
+  //         automated: `# AI-Recommended Automated Script
+  // wusa.exe /quiet /norestart KB5034441.msu
+  // if ($LASTEXITCODE -eq 0) {
+  //   Write-Host "Patch installed successfully"
+  //   # Schedule restart during maintenance window
+  //   shutdown /r /t 7200 /c "Security update requires restart"
+  // } else {
+  //   Write-Error "Patch installation failed"
+  // }`,
+  //         manual: `# Manual Installation Steps
+  // 1. Download KB5034441.msu from Windows Update Catalog
+  // 2. Double-click the .msu file
+  // 3. Follow the Windows Update Standalone Installer
+  // 4. Restart when prompted
 
-# Or use Command Prompt:
-wusa.exe KB5034441.msu`,
-      },
-      "UPD-2024-001": {
-        automated: `# AI-Recommended Automated Upgrade Script
-# Backup current database
-mysqldump --all-databases > backup_$(date +%Y%m%d).sql
+  // # Or use Command Prompt:
+  // wusa.exe KB5034441.msu`,
+  //       },
+  //       "UPD-2024-001": {
+  //         automated: `# AI-Recommended Automated Upgrade Script
+  // # Backup current database
+  // mysqldump --all-databases > backup_$(date +%Y%m%d).sql
 
-# Stop MySQL service
-systemctl stop mysql
+  // # Stop MySQL service
+  // systemctl stop mysql
 
-# Upgrade MySQL packages
-apt-get update && apt-get install mysql-server=8.0.35
+  // # Upgrade MySQL packages
+  // apt-get update && apt-get install mysql-server=8.0.35
 
-# Start MySQL service
-systemctl start mysql
+  // # Start MySQL service
+  // systemctl start mysql
 
-# Verify upgrade
-mysql --version`,
-        manual: `# Manual Upgrade Steps
-1. Backup your databases:
-   mysqldump --all-databases > backup.sql
+  // # Verify upgrade
+  // mysql --version`,
+  //         manual: `# Manual Upgrade Steps
+  // 1. Backup your databases:
+  //    mysqldump --all-databases > backup.sql
 
-2. Stop MySQL service:
-   sudo systemctl stop mysql
+  // 2. Stop MySQL service:
+  //    sudo systemctl stop mysql
 
-3. Update packages:
-   sudo apt-get update
-   sudo apt-get install mysql-server
+  // 3. Update packages:
+  //    sudo apt-get update
+  //    sudo apt-get install mysql-server
 
-4. Start MySQL:
-   sudo systemctl start mysql
+  // 4. Start MySQL:
+  //    sudo systemctl start mysql
 
-5. Verify:
-   mysql --version`,
-      },
-      "INST-DOCKER-01": {
-        automated: `# AI-Recommended Automated Installation
-# Download Docker Desktop
-$url = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
-$output = "$env:TEMP\\DockerDesktopInstaller.exe"
-Invoke-WebRequest -Uri $url -OutFile $output
+  // 5. Verify:
+  //    mysql --version`,
+  //       },
+  //       "INST-DOCKER-01": {
+  //         automated: `# AI-Recommended Automated Installation
+  // # Download Docker Desktop
+  // $url = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
+  // $output = "$env:TEMP\\DockerDesktopInstaller.exe"
+  // Invoke-WebRequest -Uri $url -OutFile $output
 
-# Install silently
-Start-Process -FilePath $output -Args "install --quiet" -Wait
+  // # Install silently
+  // Start-Process -FilePath $output -Args "install --quiet" -Wait
 
-# Verify installation
-docker --version`,
-        manual: `# Manual Installation Steps
-1. Download Docker Desktop from:
-   https://www.docker.com/products/docker-desktop
+  // # Verify installation
+  // docker --version`,
+  //         manual: `# Manual Installation Steps
+  // 1. Download Docker Desktop from:
+  //    https://www.docker.com/products/docker-desktop
 
-2. Run the installer:
-   - Double-click Docker Desktop Installer.exe
-   - Follow installation wizard
-   - Enable WSL 2 integration if prompted
+  // 2. Run the installer:
+  //    - Double-click Docker Desktop Installer.exe
+  //    - Follow installation wizard
+  //    - Enable WSL 2 integration if prompted
 
-3. Start Docker Desktop
+  // 3. Start Docker Desktop
 
-4. Verify installation:
-   docker --version`,
-      },
-    };
+  // 4. Verify installation:
+  //    docker --version`,
+  //       },
+  //     };
 
-    return (
-      scripts[patch.id] || {
-        automated: "# No automated script available",
-        manual: "# No manual steps available",
-      }
-    );
+  //     return (
+  //       scripts[patch.id] || {
+  //         automated: "# No automated script available",
+  //         manual: "# No manual steps available",
+  //       }
+  //     );
+  //   };
+  const generateAIScript = async (patch) => {
+    return await generateScriptUsingGemini(patch);
   };
 
   const handleExecutePatch = (patch, mode) => {
@@ -711,17 +939,169 @@ docker --version`,
     }
   };
 
-  const handleSaveWorkflow = (workflowData) => {
-    const newWorkflow = {
-      id: `WF-${String(workflows.length + 1).padStart(3, "0")}`,
-      ...workflowData,
-      lastRun: "Never",
-      status: "active",
-    };
+  // --- WORKFLOW CRUD -> backend integration
+  const handleSaveWorkflow = async (workflowData) => {
+    try {
+      const payload = {
+        instructions: workflowData.generatedScript || workflowData.instructions,
+        script_type: "bash",
+        encrypted: true,
+      };
 
-    setWorkflows([...workflows, newWorkflow]);
-    setShowCreateWorkflowModal(false);
-    showToast("Workflow created successfully", "success");
+      // Backend returns only id
+      const saved = await patchAPI.createWorkflow(payload);
+
+      const created = {
+        id:
+          saved?.workflow_id ||
+          `WF-${String(workflows.length + 1).padStart(3, "0")}`,
+        name: workflowData.name,
+        type: workflowData.type,
+        patches: workflowData.patches,
+        devices: workflowData.devices,
+        schedule: workflowData.schedule,
+        lastRun: "Never",
+        status: "active",
+        scriptType: payload.script_type,
+        script: payload.instructions,
+        executionMode: workflowData.executionMode,
+      };
+
+      setWorkflows((prev) => [...prev, created]);
+      setShowCreateWorkflowModal(false);
+      showToast("Workflow created successfully", "success");
+    } catch (err) {
+      if (err.response) {
+        console.error("createWorkflow API error:", err.response.data);
+        showToast(
+          `Failed to create workflow: ${
+            err.response.data.message || err.response.statusText
+          }`,
+          "error"
+        );
+      } else if (err.request) {
+        console.error("Network error:", err);
+        showToast("Network error: Cannot reach server", "error");
+      } else {
+        console.error("Unexpected error:", err);
+        showToast("Unexpected error occurred", "error");
+      }
+    }
+  };
+  //will check tomorrow
+  // const handleSaveWorkflow = async (workflowData) => {
+  //   try {
+  //     const payload = {
+  //       instructions: workflowData.generatedScript || workflowData.instructions,
+  //       script_type: "bash",
+  //       encrypted: true,
+  //     };
+
+  //     // 1️⃣ Create workflow on backend
+  //     const saved = await patchAPI.createWorkflow(payload);
+
+  //     // 2️⃣ Get workflow ID returned from backend
+  //     const workflowId = saved?.workflow_id;
+  //     if (!workflowId) {
+  //       showToast("Workflow created but no ID returned from backend", "warning");
+  //     }
+
+  //     // 3️⃣ Build workflow object for state/UI
+  //     const created = {
+  //       id: workflowId || `WF-${String(workflows.length + 1).padStart(3, "0")}`, // fallback only for UI
+  //       name: workflowData.name,
+  //       type: workflowData.type,
+  //       patches: workflowData.patches,
+  //       devices: workflowData.devices,
+  //       schedule: workflowData.schedule,
+  //       lastRun: "Never",
+  //       status: "active",
+  //       scriptType: payload.script_type,
+  //       script: payload.instructions,
+  //       executionMode: workflowData.executionMode,
+  //     };
+
+  //     // 4️⃣ Update workflow state
+  //     setWorkflows((prev) => [...prev, created]);
+  //     setShowCreateWorkflowModal(false);
+  //     showToast("Workflow created successfully", "success");
+
+  //     // 5️⃣ Auto-run workflow if selected and ID exists
+  //     if (workflowData.executionMode === "auto" && workflowId) {
+  //       await handleRunWorkflow(workflowId);
+
+  //       // Optional: update lastRun/status immediately in UI
+  //       setWorkflows((prev) =>
+  //         prev.map((wf) =>
+  //           wf.id === workflowId
+  //             ? { ...wf, lastRun: new Date().toLocaleString(), status: "running" }
+  //             : wf
+  //         )
+  //       );
+  //       showToast("Workflow execution started automatically", "success");
+  //     }
+
+  //     return created; // optional, useful if you need it elsewhere
+
+  //   } catch (err) {
+  //     console.error("Error in handleSaveWorkflow:", err);
+
+  //     if (err.response) {
+  //       showToast(
+  //         `Failed to create workflow: ${err.response.data.message || err.response.statusText}`,
+  //         "error"
+  //       );
+  //     } else if (err.request) {
+  //       showToast("Network error: Cannot reach server", "error");
+  //     } else {
+  //       showToast("Unexpected error occurred", "error");
+  //     }
+  //   }
+  // };
+
+const handleRunWorkflow = async (workflowId) => {
+    try {
+      showToast("Workflow execution started...", "info");
+
+      await patchAPI.executeWorkflow(workflowId);
+
+      // Update the workflow's lastRun timestamp in state
+      setWorkflows((prev) =>
+        prev.map((wf) =>
+          wf.id === workflowId
+            ? {
+                ...wf,
+                lastRun: new Date().toLocaleString(),
+                status: "completed",
+              }
+            : wf
+        )
+      );
+            // Show success toast after execution
+      setTimeout(() => {
+        showToast("Workflow executed successfully!", "success");
+      }, 1500);
+    } catch (err) {
+      console.error("executeWorkflow error", err);
+      showToast("Failed to run workflow", "error");
+
+      // Update status to error on failure
+      setWorkflows((prev) =>
+        prev.map((wf) =>
+          wf.id === workflowId ? { ...wf, status: "error" } : wf
+        )
+      );
+    }
+  };
+  const handleDeleteWorkflow = async (workflowId) => {
+    try {
+      await patchAPI.deleteWorkflow(workflowId);
+      setWorkflows((prev) => prev.filter((w) => w.id !== workflowId));
+      showToast("Workflow deleted", "success");
+    } catch (err) {
+      console.error("deleteWorkflow error", err);
+      showToast("Failed to delete workflow", "error");
+    }
   };
 
   const handleExportReport = () => {
@@ -821,6 +1201,16 @@ docker --version`,
   const updatingCount = devices.filter((d) => d.status === "updating").length;
   const criticalCount = devices.filter((d) => d.status === "critical").length;
 
+  const filteredDevices =
+    deviceFilter === "All Devices"
+      ? devices
+      : devices.filter((d) => {
+          if (deviceFilter === "Healthy") return d.status === "healthy";
+          if (deviceFilter === "Updating") return d.status === "updating";
+          if (deviceFilter === "Critical") return d.status === "critical";
+          return true;
+        });
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Toast Notification */}
@@ -831,7 +1221,6 @@ docker --version`,
           onClose={() => setToast(null)}
         />
       )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page Header */}
         <div className="mb-8">
@@ -857,6 +1246,7 @@ docker --version`,
                 />
                 Refresh
               </button>
+
               <button
                 onClick={handleViewWorkflows}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
@@ -939,7 +1329,11 @@ docker --version`,
                   Device Management
                 </h3>
                 <div className="flex space-x-2">
-                  <select className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm border border-gray-300">
+                  <select
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm border border-gray-300"
+                    value={deviceFilter}
+                    onChange={(e) => setDeviceFilter(e.target.value)}
+                  >
                     <option>All Devices</option>
                     <option>Healthy</option>
                     <option>Updating</option>
@@ -950,7 +1344,7 @@ docker --version`,
             </div>
 
             <div className="divide-y divide-gray-200">
-              {devices.map((device) => (
+              {filteredDevices.map((device) => (
                 <div
                   key={device.id}
                   className={`p-4 cursor-pointer transition-colors ${
@@ -1026,13 +1420,31 @@ docker --version`,
 
           {/* Available Patches */}
           <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900">
                 Available Patches
               </h3>
+              <button
+                onClick={() => handleViewLogs(devices[0])} // example: show logs for first device
+                className="text-m font-semibold px-5 py-1 bg-gray-100 rounded hover:bg-gray-200 "
+              >
+                Show Logs
+              </button>
             </div>
 
             <div className="divide-y divide-gray-200">
+              {loadingApps && (
+                <div className="p-4 text-sm text-gray-500">
+                  Loading patches...
+                </div>
+              )}
+
+              {!loadingApps && availablePatches.length === 0 && (
+                <div className="p-4 text-sm text-gray-500">
+                  No managed apps found.
+                </div>
+              )}
+
               {availablePatches.map((patch) => (
                 <div
                   key={patch.id}
@@ -1061,7 +1473,8 @@ docker --version`,
                           </span>
                         </div>
                         <p className="text-sm text-gray-900 mb-1">
-                          {patch.name}
+                          {patch.name}{" "}
+                          {patch.version ? `(${patch.version})` : ""}
                         </p>
                         <p className="text-xs text-gray-600">
                           {patch.description}
@@ -1106,7 +1519,7 @@ docker --version`,
             <div className="p-4">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <button
-                  onClick={handleDeployAll}
+                  onClick={() => setDeployAllOpen(true)}
                   className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors hover:bg-blue-700"
                 >
                   <Play className="w-4 h-4" />
@@ -1120,18 +1533,19 @@ docker --version`,
                   <span>Pause Updates</span>
                 </button>
                 <button
+                  onClick={handleResumeUpdates}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors hover:bg-gray-300"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Resume Updates</span>
+                </button>
+
+                <button
                   onClick={handleRollback}
                   className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors hover:bg-gray-300"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Rollback</span>
-                </button>
-                <button
-                  onClick={handleViewWorkflows}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors hover:bg-gray-300"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Workflows</span>
                 </button>
                 <button
                   onClick={handleExportReport}
@@ -1209,21 +1623,80 @@ docker --version`,
       <Modal
         isOpen={showDeployModal}
         onClose={() => setShowDeployModal(false)}
-        title="Confirm Deployment"
+        title="Review Deployment Summary"
+        size="lg"
       >
-        <div className="space-y-4">
-          <p className="text-gray-900">
-            Are you sure you want to deploy patches to all devices? This action
-            will:
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-sm text-gray-900">
-            <li>
-              Update {devices.filter((d) => d.patches > 0).length} devices
-            </li>
-            <li>May cause temporary service interruptions</li>
-            <li>Create automatic restore points</li>
-          </ul>
+        <div className="space-y-6 text-gray-900">
+          {/* Section 1: Devices Summary */}
+          <div>
+            <h3 className="font-semibold mb-2 text-gray-800">
+              Devices Summary
+            </h3>
+            <ul className="text-sm space-y-1">
+              <li>Total Devices: {devices.length}</li>
+              <li>
+                Devices with Pending Patches:{" "}
+                {devices.filter((d) => d.patches > 0).length}
+              </li>
+              <li>
+                Devices Requiring Reboot:{" "}
+                {devices.filter((d) => d.requiresReboot).length}
+              </li>
+              <li>
+                Offline Devices (Will Retry Automatically):{" "}
+                {devices.filter((d) => !d.online).length}
+              </li>
+            </ul>
+          </div>
 
+          {/* Section 2: Patch Summary */}
+          <div>
+            <h3 className="font-semibold mb-2 text-gray-800">Patch Summary</h3>
+            <ul className="text-sm space-y-1">
+              <li>
+                Total Patches to Deploy:{" "}
+                {devices.reduce((count, d) => count + d.patches, 0)}
+              </li>
+              <li>
+                Critical Patches:{" "}
+                {devices.reduce(
+                  (count, d) => count + d.criticalPatches || 0,
+                  0
+                )}
+              </li>
+              <li>Estimated Deployment Time: ~3–7 minutes</li>
+            </ul>
+          </div>
+
+          {/* Section 3: Deployment Strategy */}
+          <div>
+            <h3 className="font-semibold mb-2 text-gray-800">
+              Deployment Strategy
+            </h3>
+            <div className="space-y-2 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="strategy" defaultChecked />
+                Immediate Deployment
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="strategy" />
+                Schedule for later (coming soon)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="strategy" />
+                Staggered Rollout (batches)
+              </label>
+            </div>
+          </div>
+
+          {/* Section 4: Warning */}
+          <div className="bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
+            <strong>Warning:</strong> Deployment may cause temporary service
+            interruptions. Restore points will be created automatically where
+            supported.
+          </div>
+
+          {/* Section 5: Actions */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               onClick={() => setShowDeployModal(false)}
@@ -1231,6 +1704,7 @@ docker --version`,
             >
               Cancel
             </button>
+
             <button
               onClick={() => {
                 setShowDeployModal(false);
@@ -1272,6 +1746,18 @@ docker --version`,
           </div>
 
           <div className="space-y-3">
+            {loadingWorkflows && (
+              <div className="p-4 text-sm text-gray-500">
+                Loading workflows...
+              </div>
+            )}
+
+            {!loadingWorkflows && workflows.length === 0 && (
+              <div className="p-4 text-sm text-gray-500">
+                No workflows found.
+              </div>
+            )}
+
             {workflows.map((workflow) => (
               <div
                 key={workflow.id}
@@ -1328,11 +1814,23 @@ docker --version`,
                     Last run: {workflow.lastRun}
                   </span>
                   <div className="flex space-x-2">
-                    <button className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                    <button
+                      className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                      // future: edit
+                    >
                       Edit
                     </button>
-                    <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
+                    <button
+                      onClick={() => handleRunWorkflow(workflow.id)}
+                      className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
                       Run Now
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWorkflow(workflow.id)}
+                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -1343,17 +1841,13 @@ docker --version`,
       </Modal>
 
       {/* Create Workflow Modal */}
-      <Modal
-        isOpen={showCreateWorkflowModal}
-        onClose={() => setShowCreateWorkflowModal(false)}
-        title="Create New Workflow"
-        size="lg"
-      >
-        <CreateWorkflowForm
-          onSave={handleSaveWorkflow}
-          onCancel={() => setShowCreateWorkflowModal(false)}
+      {showCreateWorkflowModal && (
+        <WorkflowWizard
+          isOpen={showCreateWorkflowModal}
+          onClose={() => setShowCreateWorkflowModal(false)}
+          onComplete={handleSaveWorkflow}
         />
-      </Modal>
+      )}
 
       {/* Patch Details Modal */}
       {selectedPatch && (
@@ -1368,6 +1862,255 @@ docker --version`,
             onExecute={handleExecutePatch}
             generateScript={generateAIScript}
           />
+        </Modal>
+      )}
+
+      {/* Deploy all modal */}
+      <DeployAllModal
+        isOpen={deployAllOpen}
+        onClose={() => setDeployAllOpen(false)}
+        devices={devices} // your devices array from API (mock currently)
+        showToast={showToast} // whatever toast method you use
+      />
+
+      {/* Logs Modal */}
+      {logsDevice && (
+        <Modal
+          isOpen={showLogsModal}
+          onClose={() => setShowLogsModal(false)}
+          title={`Patch Logs: ${logsDevice.name}`}
+          size="2xl"
+        >
+          <DetailedPatchLogs device={logsDevice} />
+        </Modal>
+      )}
+
+      {/* Rollback Confirmation Modal */}
+      {rollbackDevice && (
+        <Modal
+          isOpen={showRollbackModal}
+          onClose={() => {
+            setRollbackDevice(null);
+            setShowRollbackModal(false);
+          }}
+          title={`Confirm Rollback: ${rollbackDevice.name}`}
+          size="md"
+        >
+          <div className="space-y-4">
+            <p>
+              You are about to rollback <strong>{rollbackDevice.name}</strong>{" "}
+              from <strong>{rollbackFromVersion}</strong> to{" "}
+              <strong>{rollbackToVersion}</strong>.
+            </p>
+            <p className="text-sm text-gray-600">
+              Are you sure you want to proceed?
+            </p>
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                onClick={() => {
+                  setRollbackDevice(null);
+                  setShowRollbackModal(false);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // reuse your confirmRollback logic
+                  setDevices((prev) =>
+                    prev.map((d) =>
+                      d.id === rollbackDevice.id
+                        ? { ...d, status: "rolling-back", progress: 0 }
+                        : d
+                    )
+                  );
+                  showToast(`Rolling back ${rollbackDevice.name}...`, "info");
+                  setShowRollbackModal(false);
+
+                  setTimeout(() => {
+                    setDevices((prev) =>
+                      prev.map((d) =>
+                        d.id === rollbackDevice.id
+                          ? { ...d, status: "healthy", progress: 100 }
+                          : d
+                      )
+                    );
+                    showToast("Rollback completed successfully", "success");
+                    setRollbackDevice(null);
+                  }, 2000);
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              >
+                Confirm Rollback
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* pause updates, resume updates modals (kept same) */}
+      {showPauseModal && (
+        <Modal
+          isOpen={showPauseModal}
+          onClose={() => setShowPauseModal(false)}
+          title="Confirm Pause Updates"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              You are about to pause updates for the following devices. Pausing
+              will stop the workflow at its current step. Updates can be resumed
+              later.
+            </p>
+
+            <div className="bg-gray-100 rounded-lg p-3 max-h-60 overflow-y-auto">
+              {devicesToPause.map((device) => (
+                <div
+                  key={device.id}
+                  className="p-3 border-b last:border-none border-gray-300"
+                >
+                  <p className="font-semibold text-gray-900">{device.name}</p>
+                  <p className="text-sm text-gray-600">IP: {device.ip}</p>
+                  <p className="text-sm text-gray-600">
+                    Location: {device.location}
+                  </p>
+
+                  {/* Progress section wrapped correctly */}
+                  {device.currentStep && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-700">
+                        Current Step: {device.currentStep}
+                        {device.stepCount && (
+                          <span>
+                            {" "}
+                            ({device.currentStepNumber} / {device.stepCount})
+                          </span>
+                        )}
+                      </p>
+
+                      <div className="w-full bg-gray-300 rounded-full h-2 mt-1">
+                        <div
+                          className="bg-yellow-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: device.stepCount
+                              ? `${
+                                  (device.currentStepNumber /
+                                    device.stepCount) *
+                                  100
+                                }%`
+                              : "0%",
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-red-600 text-sm">
+              Pausing at certain steps may leave the device in an intermediate
+              state until resumed.
+            </p>
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded-lg text-sm"
+                onClick={() => setShowPauseModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600"
+                onClick={confirmPauseUpdates}
+              >
+                Pause Updates
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {showResumeModal && (
+        <Modal
+          isOpen={showResumeModal}
+          onClose={() => setShowResumeModal(false)}
+          title="Confirm Resume Updates"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              You are about to resume updates for the following devices. Updates
+              will continue from where they were paused.
+            </p>
+
+            <div className="bg-gray-100 rounded-lg p-3 max-h-60 overflow-y-auto">
+              {devicesToResume.map((device) => (
+                <div
+                  key={device.id}
+                  className="p-3 border-b last:border-none border-gray-300"
+                >
+                  <p className="font-semibold text-gray-900">{device.name}</p>
+                  <p className="text-sm text-gray-600">IP: {device.ip}</p>
+                  <p className="text-sm text-gray-600">
+                    Location: {device.location}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Current Version: {device.currentVersion}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Target Version: {device.targetVersion}
+                  </p>
+
+                  {device.currentStep && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-700">
+                        Current Step: {device.currentStep}{" "}
+                        {device.stepCount && (
+                          <span>
+                            ({device.currentStepNumber}/{device.stepCount})
+                          </span>
+                        )}
+                      </p>
+
+                      <div className="w-full bg-gray-300 rounded-full h-2 mt-1">
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: device.stepCount
+                              ? `${
+                                  (device.currentStepNumber /
+                                    device.stepCount) *
+                                  100
+                                }%`
+                              : "0%",
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded-lg text-sm"
+                onClick={() => setShowResumeModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                onClick={confirmResumeUpdates}
+              >
+                Resume Updates
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
 
